@@ -112,7 +112,11 @@ export default function EventosScreen() {
       {/* List */}
       <ScrollView contentContainerStyle={s.list} showsVerticalScrollIndicator={false}>
         {filtered.map((e) => (
-          <TouchableOpacity key={e.id} style={s.card}>
+          <TouchableOpacity
+            key={e.id}
+            style={s.card}
+            onPress={() => router.push({ pathname: '/evento/[id]/participantes', params: { id: e.id } })}
+          >
             <View style={{ gap: 8 }}>
               <View style={s.cardTop}>
                 <Text style={s.cardTitle}>{e.title}</Text>
