@@ -4,25 +4,43 @@ import { Link, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles as g } from '@/styles/shared';
+import { api } from '@/lib/api';
+import { storage } from '@/lib/storage';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showErrors, setShowErrors] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [authErrorMsg, setAuthErrorMsg] = useState<string | null>(null);
+  const [inlineAuthError, setInlineAuthError] = useState(false);
 
   const emailInvalid = showErrors && !/^\S+@\S+\.[\w-]+$/.test(email);
   const passwordInvalid = showErrors && password.length === 0;
   const hasGlobalError = emailInvalid || passwordInvalid;
 
-  const onSubmit = () => {
-    const valid = /^\S+@\S+\.[\w-]+$/.test(email) && password.length > 0;
+  const onSubmit = async () => {
+    const validEmail = /^\S+@\S+\.[\w-]+$/.test(email);
+    const validPassword = password.length > 0;
+    const valid = validEmail && validPassword;
     if (!valid) {
       setShowErrors(true);
+      setAuthErrorMsg('Preencha um e-mail válido e a palavra-passe.');
       return;
     }
-    // Simular sucesso de login
-    router.replace('/(tabs)');
+    try {
+      setLoading(true);
+      const { token } = await api.login({ email, password });
+      await storage.setToken(token);
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      setShowErrors(true);
+      setAuthErrorMsg('Credenciais inválidas. Por favor, verifique seu e-mail e palavra-passe.');
+      setInlineAuthError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,11 +52,11 @@ export default function LoginScreen() {
         <Text style={g.title}>Bem-vindo de volta!</Text>
         <Text style={g.subtitle}>Faça login para gerenciar seus eventos.</Text>
 
-        {hasGlobalError && (
+        {(hasGlobalError || authErrorMsg) && (
           <View style={g.errorBanner}>
             <MaterialIcons name="error" size={18} color="#EF4444" style={{ marginRight: 8 }} />
             <Text style={g.errorBannerText}>
-              Credenciais inválidas. Por favor, verifique seu e-mail e palavra-passe.
+              {authErrorMsg || 'Credenciais inválidas. Por favor, verifique seu e-mail e palavra-passe.'}
             </Text>
           </View>
         )}
@@ -77,6 +95,9 @@ export default function LoginScreen() {
             </View>
           </View>
           {passwordInvalid && <Text style={g.errorText}>Este campo é obrigatório.</Text>}
+          {inlineAuthError && !passwordInvalid && (
+            <Text style={g.errorText}>E-mail ou palavra-passe incorretos.</Text>
+          )}
         </View>
 
         <View style={{ alignItems: 'flex-end' }}>
@@ -85,8 +106,8 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={g.primaryButton} onPress={onSubmit}>
-          <Text style={g.primaryButtonText}>Entrar</Text>
+        <TouchableOpacity style={g.primaryButton} onPress={onSubmit} disabled={loading}>
+          <Text style={g.primaryButtonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
         </TouchableOpacity>
 
         <View style={g.dividerRow}>
