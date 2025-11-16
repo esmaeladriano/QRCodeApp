@@ -1,33 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
+import { styles as g } from '@/styles/shared';
 
 export default function DashboardScreen() {
+  const router = useRouter();
+  const [userName, setUserName] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const token = await storage.getToken();
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
+      try {
+        const { user } = await api.me(token);
+        setUserName(user?.name || '');
+      } catch {
+        router.replace('/login');
+      }
+    })();
+  }, [router]);
   return (
-    <View style={styles.screen}>
+    <View style={s.screen}>
+      <View style={g.cardContainer}>
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
+      <View style={s.header}>
+        <View style={s.headerLeft}>
           <Image
             source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBtOLDMW34_l2ZMogqWeTdjCwH3QJ440AN81naR3-t6V2429feHKHlGvjFstiAq1t8O6nLMLrnLRiCuKsKJxHMiLIRW4Ud89QQZMQ9vu7zcoFw69itLyfS4awcNABEOLgFeIlrYHfXwWivnwLpH5JDITYvRAZZbc9rF_1joWCsXlwYamAc6Fe5hOBHOAKaTM5zUBhDEpQKYw1F6zZPWuTBcYaOlPsDUM6Nw-qtA2rI6W2US6W0PvcKk_MrLGQG3j0WUQ7wcz68jxS8e' }}
-            style={styles.avatar}
+            style={s.avatar}
           />
           <View>
-            <Text style={styles.subtext}>Bem-vindo(a) de volta,</Text>
-            <Text style={styles.title}>Alex Martinez</Text>
+            <Text style={s.subtext}>Bem-vindo(a) de volta,</Text>
+            <Text style={s.title}>{userName || '—'}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.iconBtn}>
+        <TouchableOpacity style={s.iconBtn}>
           <MaterialIcons name="notifications" size={22} color="#64748b" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         {/* Resumo */}
         <View style={{ marginBottom: 12 }}>
-          <Text style={styles.sectionTitle}>Resumo dos Seus Eventos</Text>
+          <Text style={s.sectionTitle}>Resumo dos Seus Eventos</Text>
         </View>
-        <View style={styles.grid2}>
+        <View style={s.grid2}>
           <Card icon="event" value="12" label="Meus Eventos" />
           <Card icon="group" value="1,450" label="Participantes" />
           <Card icon="how_to_reg" value="987" label="Check-ins" />
@@ -35,37 +58,37 @@ export default function DashboardScreen() {
         </View>
 
         {/* Gráfico simples */}
-        <View style={styles.card}>
-          <View style={styles.rowBetween}>
+        <View style={s.card}>
+          <View style={s.rowBetween}>
             <View>
-              <Text style={styles.cardTitle}>Inscrições na Semana</Text>
-              <Text style={styles.cardSubtitle}>Últimos 7 dias (seus eventos)</Text>
+              <Text style={s.cardTitle}>Inscrições na Semana</Text>
+              <Text style={s.cardSubtitle}>Últimos 7 dias (seus eventos)</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.bigNumber}>350</Text>
-              <View style={styles.rowCenter}>
+              <Text style={s.bigNumber}>350</Text>
+              <View style={s.rowCenter}>
                 <MaterialIcons name="arrow-upward" size={14} color="#0bda5b" />
-                <Text style={styles.success}>+15%</Text>
+                <Text style={s.success}>+15%</Text>
               </View>
             </View>
           </View>
-          <View style={styles.barRow}>
+          <View style={s.barRow}>
             {[0.6,0.5,0.9,0.6,1,0.9,0.4].map((h, i) => (
-              <View key={i} style={[styles.bar, { height: 96 * h, backgroundColor: i===4 ? '#1392ec' : 'rgba(19,146,236,0.35)'}]} />
+              <View key={i} style={[s.bar, { height: 96 * h, backgroundColor: i===4 ? '#1392ec' : 'rgba(19,146,236,0.35)'}]} />
             ))}
           </View>
-          <View style={styles.weekRow}>
+          <View style={s.weekRow}>
             {['M','T','W','T','F','S','S'].map((d, i) => (
-              <Text key={d} style={[styles.weekLabel, i===4 && { color: '#1392ec', fontWeight: '700' }]}>{d}</Text>
+              <Text key={d} style={[s.weekLabel, i===4 && { color: '#1392ec', fontWeight: '700' }]}>{d}</Text>
             ))}
           </View>
         </View>
 
         {/* Próximos eventos */}
-        <View style={styles.rowBetween}>
-          <Text style={styles.sectionTitle}>Seus Próximos Eventos</Text>
+        <View style={s.rowBetween}>
+          <Text style={s.sectionTitle}>Seus Próximos Eventos</Text>
           <TouchableOpacity>
-            <Text style={styles.link}>Ver todos</Text>
+            <Text style={s.link}>Ver todos</Text>
           </TouchableOpacity>
         </View>
         <EventItem
@@ -86,67 +109,69 @@ export default function DashboardScreen() {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab}>
+      <TouchableOpacity style={s.fab}>
         <MaterialIcons name="add" size={28} color="#fff" />
       </TouchableOpacity>
+    </View>
     </View>
   );
 }
 
 function Card({ icon, value, label }: { icon: any; value: string; label: string }) {
   return (
-    <View style={styles.cardSmall}>
-      <View style={styles.cardIconBg}>
+    <View style={s.cardSmall}>
+      <View style={s.cardIconBg}>
         <MaterialIcons name={icon} size={20} color="#1392ec" />
       </View>
-      <Text style={styles.cardValue}>{value}</Text>
-      <Text style={styles.cardLabel}>{label}</Text>
+      <Text style={s.cardValue}>{value}</Text>
+      <Text style={s.cardLabel}>{label}</Text>
     </View>
   );
 }
 
 function EventItem({ title, subtitle, image }: { title: string; subtitle: string; image: string }) {
   return (
-    <TouchableOpacity style={styles.eventItem}>
-      <Image source={{ uri: image }} style={styles.eventThumb} />
+    <TouchableOpacity style={s.eventItem}>
+      <Image source={{ uri: image }} style={s.eventThumb} />
       <View style={{ flex: 1 }}>
-        <Text style={styles.eventTitle} numberOfLines={1}>{title}</Text>
-        <Text style={styles.eventSubtitle} numberOfLines={2}>{subtitle}</Text>
+        <Text style={s.eventTitle} numberOfLines={1}>{title}</Text>
+        <Text style={s.eventSubtitle} numberOfLines={2}>{subtitle}</Text>
       </View>
       <MaterialIcons name="chevron-right" size={22} color="#94a3b8" />
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f4f7fa' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingBottom: 12, backgroundColor: 'rgba(244,247,250,0.9)' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 44, height: 44, borderRadius: 22, marginRight: 12 },
   subtext: { color: '#64748b', fontSize: 12 },
-  title: { color: '#0f172a', fontSize: 20, fontWeight: '700' },
-  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  content: { padding: 16, paddingBottom: 96 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
-  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  cardSmall: { flexBasis: '48%', backgroundColor: '#fff', borderRadius: 12, padding: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  cardIconBg: { width: 40, height: 40, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#e7f4fe', marginBottom: 8 },
-  cardValue: { fontSize: 22, fontWeight: '700', color: '#0f172a', marginTop: 4 },
-  cardLabel: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  rowCenter: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  cardTitle: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
+  title: { fontSize: 18, fontWeight: '700' },
+  iconBtn: { padding: 12, borderRadius: 12, backgroundColor: 'rgba(244,247,250,0.9)' },
+  content: { padding: 16, paddingTop: 0 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  grid2: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  cardSmall: { backgroundColor: '#fff', borderRadius: 12, padding: 16, flex: 1, marginRight: 8 },
+  cardIconBg: { width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(19,146,236,0.1)', justifyContent: 'center', alignItems: 'center' },
+  cardValue: { fontSize: 18, fontWeight: '700', marginBottom: 2 },
+  cardLabel: { fontSize: 12, color: '#64748b' },
+  card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12 },
+  cardTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   cardSubtitle: { fontSize: 12, color: '#64748b' },
-  bigNumber: { fontSize: 22, fontWeight: '700', color: '#0f172a' },
-  success: { fontSize: 12, color: '#0bda5b', fontWeight: '600' },
-  barRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, marginTop: 10, marginBottom: 6, paddingHorizontal: 4 },
-  bar: { width: 18, borderRadius: 6 },
-  weekRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
-  weekLabel: { fontSize: 11, fontWeight: '700', color: '#94a3b8' },
-  eventItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 10, borderRadius: 12, marginTop: 10, gap: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  eventThumb: { width: 64, height: 64, borderRadius: 10, backgroundColor: '#e2e8f0' },
-  eventTitle: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-  eventSubtitle: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  fab: { position: 'absolute', right: 16, bottom: 32, width: 56, height: 56, borderRadius: 28, backgroundColor: '#1392ec', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 6 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  bigNumber: { fontSize: 24, fontWeight: '700' },
+  success: { fontSize: 12, color: '#0bda5b' },
+  rowCenter: { flexDirection: 'row', alignItems: 'center' },
+  barRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  bar: { width: 24, borderRadius: 12, backgroundColor: 'rgba(19,146,236,0.35)' },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  weekLabel: { fontSize: 12, color: '#64748b' },
+  eventItem: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderRadius: 12, marginBottom: 8 },
+  eventThumb: { width: 80, height: 80, borderRadius: 12, marginRight: 12 },
+  eventTitle: { fontSize: 16, fontWeight: '700' },
+  eventSubtitle: { fontSize: 12, color: '#64748b' },
+  fab: { position: 'absolute', bottom: 16, right: 16, backgroundColor: '#1392ec', borderRadius: 28, padding: 12, justifyContent: 'center', alignItems: 'center' },
+  link: { fontSize: 14, color: '#1392ec' },
 });
