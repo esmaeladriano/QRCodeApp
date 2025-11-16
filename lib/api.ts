@@ -61,4 +61,62 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
+  events: {
+    create(params: {
+      name: string;
+      category?: string;
+      location?: string;
+      date: string; // YYYY-MM-DD
+      startTime: string; // HH:mm
+      endTime: string; // HH:mm
+      capacity: number;
+      description?: string;
+      bannerUrl?: string;
+    }, token?: string) {
+      return request<{ id: string }>(`/events`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: JSON.stringify(params),
+      });
+    },
+    get(id: string, token?: string) {
+      return request<{ id: string; name: string; category?: string; location?: string; date: string; startTime: string; endTime: string; capacity: number; description?: string; bannerUrl?: string }>(`/events/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+    },
+    cancel(id: string, token?: string) {
+      return request<{ ok: true }>(`/events/${id}/cancel`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+    },
+  },
+  upload: {
+    banner(fileUri: string, token?: string, onProgress?: (progress: number) => void) {
+      const form = new FormData();
+      const name = fileUri.split('/').pop() || 'banner.jpg';
+      form.append('file', { uri: fileUri, name, type: 'image/jpeg' } as any);
+      return new Promise<{ url: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', API_BASE_URL + '/upload');
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.onload = () => {
+          try {
+            const json = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+            if (xhr.status >= 200 && xhr.status < 300) resolve(json as { url: string });
+            else reject(new Error(json?.error || `Upload failed (${xhr.status})`));
+          } catch (e) {
+            reject(new Error(`Upload failed (${xhr.status})`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        if (xhr.upload && onProgress) {
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+          };
+        }
+        xhr.send(form);
+      });
+    },
+  },
 };

@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { storage } from '@/lib/storage';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -41,15 +42,31 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Painel',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="dashboard" color={color} size={size ?? 24} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="eventos"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Meus Eventos',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="event" color={color} size={size ?? 24} />,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="participantes"
+        options={{
+          title: 'Participantes',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="group" color={color} size={size ?? 24} />,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="ajustes"
+        options={{
+          title: 'Ajustes',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="settings" color={color} size={size ?? 24} />,
         }}
       />
     </Tabs>
